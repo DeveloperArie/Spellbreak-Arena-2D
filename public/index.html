@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head id="header">
+    <link rel="stylesheet" type="text/css" href="styles.css" /> 
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body id="body">
+    <div class="gradient">
+        <div id="signDiv">
+            <h2 id="opener">Welcome to Spellbreak Arena 2D</h2>
+            <b id="enter-name">Please enter a username below: </b>
+            <input id="username" type="text"></input><br>
+            <button id="signIn">Enter</button>
+        </div>
+        <div id="gameDiv" style="display: none;">
+            <div id="container">
+                <canvas id="c"></canvas>
+                <div>                    
+                    <div id="timer">
+                        <h1>Time </h1>
+                    </div>
+                    <div id="controls">
+                        <p>W: Move up</p>
+                        <p>A: Move left</p>
+                        <p>S: Move down</p>
+                        <p>D: Move right</p>
+                        <p>1: Fireball</p>
+                        <p>2: Toxic</p>
+                        <p>3: Icelance</p>
+                        <p>Shift: Dash</p>
+                    </div>
+                    <div id="chat-box"></div>
+                    <form id="chat-form">
+                        <input id="chat-input" type="text"></input><br>
+                    </form>
+                    <button id="start">Start</button>
+                </div>
+            </div>
+        </div>
+        <script type="module" src="client.js"></script>
+    </div>
+</body>
+</html>

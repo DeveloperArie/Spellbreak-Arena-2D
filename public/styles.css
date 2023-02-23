@@ -1,0 +1,109 @@
+body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: 10s linear gradient infinite;
+    animation-play-state: running;
+    background-size: 200% 200%;
+    background-position: left bottom;
+    background-image: linear-gradient(to right, blue, lightblue, blue, lightblue, blue);
+    animation: gradient-animation 10s infinite;
+}
+@keyframes gradient-animation {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 0% 100%;
+    }
+}
+#header {
+    margin: auto auto;
+}
+#start{
+    background-color: darkgreen;
+    border: 2px solid black;
+    border-radius: 4px;
+    width: 223px;
+    height: 50px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-top: 10px;
+}
+#chat-box {
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+    height: 200px;
+    background-color: white;
+    border: 2px solid #000000;
+    padding: 10px;
+    overflow-y:scroll;
+    border: 2px solid black;
+    border-radius: 4px;
+}
+#chat-input{
+    bottom: 0;
+    width: 200px;
+    padding: 10px;
+    margin-top: 10px;
+    border: 2px solid black;
+    border-radius: 4px;
+}
+#game-div{
+    display: none;
+}
+#container{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: end;
+}
+#opener{
+    color: goldenrod;
+    text-shadow: 1px 1px 2px black;
+}
+#username{
+    width: 200px;
+    border: 2px solid black;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-left: 6px;
+    padding-right: 6px;
+    border-radius: 4px;
+}
+#enter-name{
+    color: white;
+}
+#signIn{
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 40px;
+    padding-right: 40px;
+    background-color: blue;
+    color: white;
+    border-radius: 4px;
+}
+#signDiv{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+#c{
+    border: 1px solid #000000;
+    margin-right: 10px;
+    margin-top: 20px;
+    margin-left: 20px;
+}
+#controls{
+    align-items: center;
+    margin-bottom: 10px;
+}
+#timer{
+    margin-bottom: 10px;
+}
