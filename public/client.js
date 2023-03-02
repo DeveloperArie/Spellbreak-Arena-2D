@@ -56,7 +56,6 @@ let fireBallFrameX = 0
 let iceLanceFrameX = 0
 let gameFrame = 0
 let frameX = 0
-let selfId = null
 startBtn.onclick = function(){
     socket.emit('startGame')
 }
@@ -88,8 +87,6 @@ chatForm.onsubmit = function(e){
 socket.on('timer', function(data){
     timeLeft.innerText = " " + data.time
 })
-
-console.log(PLAYER_LIST)
 socket.on('newPositions', function(data){
     c.clearRect(0,0,840,840)
     c.fillStyle = '#CAE9FF'
