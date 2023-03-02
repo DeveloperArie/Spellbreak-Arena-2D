@@ -9,15 +9,16 @@ const TICK_RATE = 30
 const SOCKET_LIST = []
 const PLAYER_LIST = []
 const PROJECTILE_LIST = []
+const playerPositions = [{x: 50, y: 760}, {x: 760, y: 50}]
 let deletedItems = []
 let deletedItem = []
-let timer = 60
-
+let timer = 0
 class Player {
-    constructor({position, velocity}, id){
+    constructor({position, velocity}, id, username){
         this.position = position
         this.velocity = velocity
         this.id = id
+        this.username = username
         this.height = 20
         this.width = 20
         this.pressingRight = false
@@ -34,7 +35,6 @@ class Player {
         this.health = 200
         this.powerUp
         this.isConsuming
-        this.projectileIsColliding
         this.powerUpTimer = 0
         this.powerUpTime = 200
         this.score = 0
@@ -53,7 +53,7 @@ class Player {
             this.position.y += this.velocity.y
         }
         if(this.isDashing){
-            this.position.y += this.velocity.y
+            this.dash()
         }
         playerBoundaryCollisionDetection()
         playerConsumableCollisionDetection()
@@ -64,64 +64,26 @@ class Player {
         this.targetVelocityX = Math.cos(this.rotation)
         this.targetVelocityY = Math.sin(this.rotation)
     }
+    dash(){
+        const currentVelocityX = this.velocity.x
+        const currentVelocityY = this.velocity.y
+        this.velocity.x = currentVelocityX * 2 
+        this.velocity.y = currentVelocityY * 2 
+        this.isDashing = true
+        setTimeout(() => {
+            if (this.isDashing) {
+                this.velocity.x = currentVelocityX
+                this.velocity.y = currentVelocityY
+                this.isDashing = false
+            }
+        }, 500)
+        this.position.x += this.velocity.x
+        this.position.y += this.velocity.y
+    }
 }
-
-Player.onConnect = function(socket){
-    let player = new Player({
-        position: {
-            x: 50,
-            y: 760
-        },
-        velocity: {
-            x: 5,
-            y: 5
-        }}, socket.id)
-    PLAYER_LIST[socket.id] = player
-    socket.on('keypress', function(data){
-        if(data.inputID === 'right'){
-            player.pressingRight = data.pressed
-        }
-        if(data.inputID === 'left'){
-            player.pressingLeft = data.pressed
-        }
-        if(data.inputID === 'down'){
-            player.pressingDown = data.pressed
-        }
-        if(data.inputID === 'up'){
-            player.pressingUp = data.pressed
-        }
-    })
-    socket.on('mouseposition', function(data) {
-        player.mouseX = data.mX
-        player.mouseY = data.mY
-    })
-    socket.on('clicked', function(data){
-        if(data.type === 'fire'){
-            fire(player)
-        }
-        else if(data.type === 'toxic'){
-            toxic(player)
-        }
-        else if(data.type === 'ice'){
-            ice(player)
-        }
-        else{
-            fire(player)
-        }
-    })
-    socket.on('drankpotion', () => {
-        player.isConsuming = false
-    })
-    socket.on('collided', () => {
-        player.projectileIsColliding = false
-    })
-    
-}
-
-Player.onDisconnect = function(socket){
-    delete PLAYER_LIST[socket.id]
-}
-
+PLAYER_LIST.forEach((player) => {
+    console.log(player.score)
+})
 class Projectile {
     constructor({position, velocity}, width, height, damage, color, time, parent, angle, modifier){
         this.position = position
@@ -135,11 +97,13 @@ class Projectile {
         this.parent = parent
         this.angle = angle
         this.modifier = modifier
+        this.isColliding = false
     }
     updatePosition(){
         this.position.x += this.velocity.x
         this.position.y += this.velocity.y
         projectilePlayerCollisionDetection()
+        projectileBoundaryCollisionDetection()
         PROJECTILE_LIST.forEach((projectile, index) => {
             if(projectile.timer++ > projectile.time){
                 PROJECTILE_LIST.splice(index, 1)
@@ -147,7 +111,83 @@ class Projectile {
         })     
     }
 }
-
+Player.onConnect = function(socket, username){
+    if(Object.keys(PLAYER_LIST).length < 2) {
+        let position = playerPositions[Object.keys(PLAYER_LIST).length % 2]
+        let player = new Player({
+            position: position,
+            velocity: {
+                x: 0,
+                y: 0
+            }}, socket.id, username)
+        PLAYER_LIST[socket.id] = player
+        Object.keys(PLAYER_LIST).length % 2 === 0
+        socket.on('keypress', function(data){
+            if(data.inputID === 'right'){
+                player.pressingRight = data.pressed
+                player.velocity.x = 5
+            }
+            if(data.inputID === 'left'){
+                player.pressingLeft = data.pressed
+                player.velocity.x = 5
+            }
+            if(data.inputID === 'down'){
+                player.pressingDown = data.pressed
+                player.velocity.y = 5
+            
+            }
+            if(data.inputID === 'up'){
+                player.pressingUp = data.pressed
+                player.velocity.y = 5
+            
+            }
+            if(data.inputID === 'shift'){
+                if (data.pressed) {
+                    player.isDashing = true
+                } else {
+                    player.isDashing = false
+                }
+            }
+        })
+        socket.on('mouseposition', function(data) {
+            player.mouseX = data.mX
+            player.mouseY = data.mY
+        })
+        socket.on('clicked', function(data){
+            if(data.type === 'fire'){
+                fire(player)
+            }
+            else if(data.type === 'toxic'){
+                toxic(player)
+            }
+            else if(data.type === 'ice'){
+                ice(player)
+            }
+            else{
+                fire(player)
+            }
+        })
+        socket.on('drankpotion', () => {
+            player.isConsuming = false
+        })
+        socket.on('collided', () => {
+            PROJECTILE_LIST.forEach((projectile) => {
+                projectile.isColliding = false
+            })
+            player.projectileIsColliding = false
+        })
+        socket.on('sendMsgToServer', function(data){
+            for(let i in SOCKET_LIST){
+                SOCKET_LIST[i].emit('addToChat', player.username + ': ' + data)
+            }
+        })
+    } else {
+        socket.emit('roomFull')
+    }
+}
+Player.onDisconnect = function(socket){
+    delete PLAYER_LIST[socket.id]
+}
 function fire(player){
     let fireball
     if(player.powerUp){
@@ -175,7 +215,6 @@ function fire(player){
     }
     PROJECTILE_LIST.push(fireball)
 }
-
 function toxic(player){
     let toxicModifier = [-0.2, -0.1, 0, 0.1, 0.2]
     let toxicObj
@@ -218,7 +257,6 @@ function toxic(player){
         }
     }
 }
-
 function ice(player){
     let icelance
     if(player.powerUp){
@@ -246,42 +284,38 @@ function ice(player){
     }
     PROJECTILE_LIST.push(icelance)
 }
-
 function projectilePlayerCollisionDetection(){
     for(let i = 0; i < PROJECTILE_LIST.length; i++){
         const projectile = PROJECTILE_LIST[i]
         for (let key in PLAYER_LIST){
             const player = PLAYER_LIST[key]
-            projectileBoundaryCollisionDetection(player)
                 if(projectile.parent !== player.id) {
                     if(projectile.position.y <= player.position.y + player.height && 
                     projectile.position.y + projectile.height >= player.position.y &&
                     projectile.position.x + projectile.width >= player.position.x && 
                     projectile.position.x <= player.position.x + player.width)
                     {
-                        player.health -= projectile.damage
-                        if(player.health <= 0){
-                            let shooter = PLAYER_LIST[projectile.parent]
-                            if(shooter){
-                                shooter.score += 1
-                            }
-                            player.health = 200
-                            player.position.x = 50
-                            player.position.y = 780
+                    player.health -= projectile.damage
+                    if(player.health <= 0){
+                        let shooter = PLAYER_LIST[projectile.parent]
+                        if(shooter){
+                            shooter.score += 1
+                            io.emit('updateScore', {playerID: shooter.id, score: shooter.score})
+                        }
+                        player.health = 200
                     }
                     PROJECTILE_LIST.splice(i, 1)
-                    player.projectileIsColliding = true
+                    projectile.isColliding = true
                 }
             }
         }
     }
 }
-
-function projectileBoundaryCollisionDetection(player){
+function projectileBoundaryCollisionDetection(){
     PROJECTILE_LIST.forEach((projectile, index) => {
         if (projectile.position.x < 0 || projectile.position.x > 840 || projectile.position.y < 0 || projectile.position.y > 840) {
             PROJECTILE_LIST.splice(index, 1)
-            player.projectileIsColliding = true
+            projectile.isColliding = true
         }
         for(let i = 0; i < boundaries.length; i++){
             let boundary = boundaries[i]
@@ -298,19 +332,18 @@ function projectileBoundaryCollisionDetection(player){
                 <= 
                 boundary.position.x + boundary.width) {
                     PROJECTILE_LIST.splice(index, 1)
-                    player.projectileIsColliding = true
+                    projectile.isColliding = true
             }
         } 
     })
 }
-
 function playerBoundaryCollisionDetection(){
     boundaries.forEach(boundary => {
         for(let i in PLAYER_LIST){
             let player = PLAYER_LIST[i]
             if (player.position.x < 0 || player.position.x > 840 || player.position.y < 0 || player.position.y > 840){
-                player.velocity.x = 0;
-                player.velocity.y = 0;    
+                player.velocity.x = 0
+                player.velocity.y = 0 
             }
             if(player.position.y + player.velocity.y
                 <= 
@@ -324,33 +357,30 @@ function playerBoundaryCollisionDetection(){
             player.position.x + player.velocity.x 
                 <= 
                 boundary.position.x + boundary.width){
-                
-                player.velocity.x = 0;
-                player.velocity.y = 0; 
+                player.velocity.x = 0
+                player.velocity.y = 0 
             } 
         }
     })
 }
-
 function circleRectangleCollisionDetection(p, c){
     const distX = Math.abs(c.position.x - p.position.x - p.width / 2)
     const distY = Math.abs(c.position.y - p.position.y - p.height / 2)
-        if(distX > (p.width / 2 + c.radius)){
-            return false
-        }
-        if(distY > (p.height / 2 + c.radius)){
-            return false
-        }
-        if(distX <= (p.width / 2)){
-            return true
-        } else if(distY <= (p.height / 2)){
-            return true
-        }
-        const dx = distX - p.width / 2
-        const dy = distY - p.height / 2
-        return (dx*dx + dy*dy <=(c.radius*c.radius))
+    if(distX > (p.width / 2 + c.radius)){
+        return false
+    }
+    if(distY > (p.height / 2 + c.radius)){
+        return false
+    }
+    if(distX <= (p.width / 2)){
+        return true
+    } else if(distY <= (p.height / 2)){
+        return true
+    }
+    const dx = distX - p.width / 2
+    const dy = distY - p.height / 2
+    return (dx*dx + dy*dy <=(c.radius*c.radius))
 }
-
 function playerConsumableCollisionDetection(){
     for(let p in PLAYER_LIST){
         let player = PLAYER_LIST[p]
@@ -370,6 +400,9 @@ function playerConsumableCollisionDetection(){
                     player.isConsuming = true
                 } else if(consumable.color === 'blue'){
                     player.powerUp = true
+                    setTimeout(function() {
+                        player.powerUp = false
+                    }, 5000)
                     deletedItem = consumables.splice(i, 1)
                     deletedItems.push(deletedItem)
                     deletedItems.forEach(deletedItem => {
@@ -385,7 +418,6 @@ function playerConsumableCollisionDetection(){
         } 
     }
 }
-
 Player.update = function(){
     let pack = []
     for(let i in PLAYER_LIST){
@@ -407,13 +439,12 @@ Player.update = function(){
             pd: player.pressingDown,
             pdash: player.isDashing,
             consumed: player.isConsuming,
-            pColliding: player.projectileIsColliding,
-            fx: player.frameX
+            fx: player.frameX,
+            id: player.id
         })
     } 
     return pack
 }
-
 Projectile.update = function(){
     let pack = []
     for(let i in PROJECTILE_LIST){
@@ -426,12 +457,11 @@ Projectile.update = function(){
             h: projectile.height,
             c: projectile.color,
             a: projectile.angle,
-            colliding: projectile.parent.projectileIsColliding
+            colliding: projectile.isColliding
         })
     } 
     return pack
 }
-
 Boundary.update = function(){
     let pack = []
     for(let i in boundaries){
@@ -449,7 +479,6 @@ Boundary.update = function(){
     } 
     return pack
 }
-
 Consumable.update = function(){
     let pack = []
     for(let i in consumables){
@@ -463,14 +492,13 @@ Consumable.update = function(){
     } 
     return pack
 }
-
 io.on('connection', (socket) => {
     console.log('socket connection', socket.id)
     SOCKET_LIST[socket.id] = socket
     socket.on('signIn', function(data){
         if(data.username.length > 0){
-            Player.onConnect(socket)
-            socket.emit('signInRes', {success: true})
+            Player.onConnect(socket, data.username)
+            socket.emit('signInRes', {success: true, username: data.username})
         }else{
             socket.emit('signInRes', {success: false}) 
         }
@@ -481,14 +509,27 @@ io.on('connection', (socket) => {
         Player.onDisconnect(socket)
         console.log('a player disconnected')
     })
-    socket.on('sendMsgToServer', function(data){
-        let playerName = ('' + socket.id).slice(2,7)
-        for(let i in SOCKET_LIST){
-            SOCKET_LIST[i].emit('addToChat', playerName + ': ' + data)
-        }
+    socket.on('startGame', () => {
+        resetGame()
+        startTimer()
     })
+    function resetGame(){
+        PLAYER_LIST.forEach((player, index) => {
+            const position = playerPositions[index+1]
+            player.position = position
+        })
+        timer = 60
+    }
+    function startTimer(){
+        let countDown = setInterval(function() {
+            if(timer <= 0){
+                clearInterval(countDown)
+            }
+            timer -= 1
+            socket.emit('timer', {time: timer})
+        }, 1000)
+    }
 })
-
 setInterval (function(){
     let pack = {
         player: Player.update(),
@@ -501,6 +542,5 @@ setInterval (function(){
         socket.emit('newPositions', pack)
     }  
 },1000 / TICK_RATE)
-
 app.use(express.static('public')) // stating the directory that will be hosted
-httpServer.listen(2000) // telling the server to listen to port 2000
+httpServer.listen(process.env.PORT || 2000) // telling the server to listen to port 2000

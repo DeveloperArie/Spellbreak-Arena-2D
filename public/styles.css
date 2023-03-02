@@ -105,5 +105,12 @@ body {
     margin-bottom: 10px;
 }
 #timer{
+    position: absolute;
+    top: 0;
     margin-bottom: 10px;
+}
+#timeleft{
+    border: 1px solid black;
+    padding: 20px;
+    justify-content: center;
 }

@@ -7,10 +7,13 @@ const signDiv = document.getElementById('signDiv')
 const username = document.getElementById('username')
 const signIn = document.getElementById('signIn')
 const gameDiv = document.getElementById('gameDiv')
+const startBtn = document.getElementById('start')
+const score1 = document.getElementById('score1')
+const score2 = document.getElementById('score2')
+const timeLeft = document.getElementById('timeleft')
 const c = canvas.getContext('2d')
 canvas.width = 840
 canvas.height = 840
-
 const img = {}
 img.player = new Image()
 img.player.src = 'img/mage.png'
@@ -28,7 +31,6 @@ img.potion = new Image()
 img.potion.src = '/img/pt1.png'
 img.buff = new Image()
 img.buff.src = '/img/pt2.png'
-
 const audio = {}
 audio.fireball = new Audio()
 audio.fireball.src = 'audio/fireball.mp3'
@@ -48,26 +50,46 @@ audio.potion = new Audio()
 audio.potion.src = 'audio/potion.mp3'
 audio.intro = new Audio()
 audio.intro.src = 'audio/intro.mp3'
-
+const PLAYER_LIST = []
 const staggerFrames = 2
 let fireBallFrameX = 0
 let iceLanceFrameX = 0
 let gameFrame = 0
 let frameX = 0
-
-
+let selfId = null
+startBtn.onclick = function(){
+    socket.emit('startGame')
+}
 signIn.onclick = function(){
     socket.emit('signIn', {username: username.value})
 }
+socket.on('roomFull', () => {
+    alert('Sorry the room is full. Please try again later')
+})
 socket.on('signInRes', function(data){
     if(data.success){
         signDiv.style.display = 'none'
         gameDiv.style.display = 'inline-block'
-        audio.intro.play()
+        score1.innerText += data.username + ": "
+        score2.innerText += data.username + ": "
+        audio.intro.pause()
     }else
         alert('Sign in unsuccessful')
 })
+socket.on('addToChat', function(data){
+    chatBox.innerHTML += '<div>' + data + '</div>'
+    chatBox.scrollTop = chatBox.scrollHeight
+})
+chatForm.onsubmit = function(e){
+    e.preventDefault()
+    socket.emit('sendMsgToServer', chatInput.value)
+    chatInput.value = ''
+}
+socket.on('timer', function(data){
+    timeLeft.innerText = " " + data.time
+})
 
+console.log(PLAYER_LIST)
 socket.on('newPositions', function(data){
     c.clearRect(0,0,840,840)
     c.fillStyle = '#CAE9FF'
@@ -82,7 +104,6 @@ socket.on('newPositions', function(data){
         c.fillRect(data.boundary[i].x, data.boundary[i].y, data.boundary[i].w, data.boundary[i].h)
         c.drawImage(img.tiles,data.boundary[i].x,data.boundary[i].y,data.boundary[i].w,data.boundary[i].h)
         c.restore()
-        
     } 
     for(let i = 0; i < data.consumable.length; i++){
         c.beginPath()
@@ -95,9 +116,11 @@ socket.on('newPositions', function(data){
         if(data.consumable[i].c === 'blue' ){
             c.drawImage(img.buff,data.consumable[i].x-data.consumable[i].r,data.consumable[i].y-data.consumable[i].r,data.consumable[i].r*2,data.consumable[i].r*2)
         } 
-    }
-        
+    }  
     for(let i = 0; i < data.player.length; i++){
+        if(data.player[i].id){
+            selfId = PLAYER_LIST[data.player[i].id]
+        }
         c.fillStyle = 'red'
         c.fillRect(data.player[i].x - 15, data.player[i].y - 40, 50, 5)
         c.fillStyle = 'green'
@@ -106,8 +129,9 @@ socket.on('newPositions', function(data){
         c.translate(data.player[i].x + data.player[i].w / 2, data.player[i].y + data.player[i].h / 2)
         c.rotate(data.player[i].a)
         c.translate(-data.player[i].x - data.player[i].w / 2, -data.player[i].y - data.player[i].h / 2)
-        c.drawImage(img.player,frameX*200,0,200,200,data.player[i].x-data.player[i].w/2,data.player[i].y-data.player[i].h/2,data.player[i].w*2,data.player[i].h*2)
+        c.drawImage(img.player,0,0,200,200,data.player[i].x-data.player[i].w/2,data.player[i].y-data.player[i].h/2,data.player[i].w*2,data.player[i].h*2)
         if(data.player[i].pr || data.player[i].pl || data.player[i].pu || data.player[i].pd){
+            c.drawImage(img.player,frameX*200,0,200,200,data.player[i].x-data.player[i].w/2,data.player[i].y-data.player[i].h/2,data.player[i].w*2,data.player[i].h*2)
             if(gameFrame % staggerFrames == 0){
                 if(frameX < 11) frameX++
                 else frameX = 0
@@ -115,22 +139,6 @@ socket.on('newPositions', function(data){
             gameFrame++
         }
         c.restore()
-        if(data.player[i].consumed){
-            audio.potion.play()
-            socket.emit('drankpotion')
-        }
-        if(data.player[i].pColliding){
-            if(keys.one.pressed || !keys.one.pressed && !keys.two.pressed && !keys.three.pressed){
-                audio.fireballCollision.play()
-            }
-            if(keys.two.pressed){
-                audio.splash.play()
-            }
-            if(keys.three.pressed){
-                audio.icecrack.play()
-            }2
-            socket.emit('collided')
-        } 
     }
     for(let i = 0; i < data.projectile.length; i++){
         c.save()
@@ -140,15 +148,15 @@ socket.on('newPositions', function(data){
         if(data.projectile[i].c === 'red'){
             c.save()
             c.translate(data.projectile[i].x + data.projectile[i].w / 2, data.projectile[i].y + data.projectile[i].h / 2)
-            c.rotate(270 * Math.PI/180) 
+            c.rotate(-90 * Math.PI/180) 
             c.translate(-data.projectile[i].x - data.projectile[i].w / 2, -data.projectile[i].y - data.projectile[i].h / 2)
             c.drawImage(img.fireball,fireBallFrameX*130,0,130,60,data.projectile[i].x-data.projectile[i].w*2,data.projectile[i].y,data.projectile[i].w*4,data.projectile[i].h*2)
-            c.restore()
             if(gameFrame % staggerFrames == 0){
                 if(fireBallFrameX < 7) fireBallFrameX++
                 else fireBallFrameX = 0
             }
             gameFrame++
+            c.restore()
         }
         if(data.projectile[i].c === 'green'){
             c.drawImage(img.toxic,data.projectile[i].x-data.projectile[i].w,data.projectile[i].y-data.projectile[i].h/2,data.projectile[i].w*3,data.projectile[i].h*3)
@@ -156,31 +164,31 @@ socket.on('newPositions', function(data){
         if(data.projectile[i].c === 'blue'){
             c.save()
             c.translate(data.projectile[i].x + data.projectile[i].w / 2, data.projectile[i].y + data.projectile[i].h / 2)
-            c.rotate(270 * Math.PI/180) 
+            c.rotate(-90 * Math.PI/180) 
             c.translate(-data.projectile[i].x - data.projectile[i].w / 2, -data.projectile[i].y - data.projectile[i].h / 2)
             c.drawImage(img.icelance,iceLanceFrameX*40,0,40,40,data.projectile[i].x-data.projectile[i].w*3,data.projectile[i].y-data.projectile[i].h*3,data.projectile[i].w*4,data.projectile[i].h*4)
             if(gameFrame % staggerFrames == 0){
                 if(iceLanceFrameX < 7) iceLanceFrameX++
                 else iceLanceFrameX = 0
             }
-            c.restore()
             gameFrame++
+            c.restore()
         }
+        if(data.projectile[i].colliding){
+            if(data.projectile[i].c === 'red'){
+                audio.fireballCollision.play()
+            }
+            if(data.projectile[i].c === 'green'){
+                audio.splash.play()
+            }
+            if(data.projectile[i].c === 'blue'){
+                audio.icecrack.play()
+            }
+            socket.emit('collided')
+        } 
         c.restore()
     }  
 })
-
-socket.on('addToChat', function(data){
-    chatBox.innerHTML += '<div>' + data + '</div>'
-    chatBox.scrollTop = chatBox.scrollHeight
-})
-
-chatForm.onsubmit = function(e){
-    e.preventDefault()
-    socket.emit('sendMsgToServer', chatInput.value)
-    chatInput.value = ''
-}
-
 const keys = {
     one: {
         pressed: false
@@ -192,7 +200,6 @@ const keys = {
         pressed: false
     }
 }
-
 window.addEventListener('keydown', (event) => {
     if(event.code == 'KeyD'){
         socket.emit('keypress', {inputID: 'right', pressed: true})
@@ -228,7 +235,6 @@ window.addEventListener('keydown', (event) => {
         audio.walking.play()
     }
 })
-
 window.addEventListener('keyup', (event) => {
     if(event.code == 'KeyD'){
         socket.emit('keypress', {inputID: 'right', pressed: false})
@@ -242,17 +248,19 @@ window.addEventListener('keyup', (event) => {
     if(event.code == 'KeyW'){
         socket.emit('keypress', {inputID: 'up', pressed: false})
     }
+    if(event.code == 'ShiftLeft'){
+        socket.emit('keypress', {inputID: 'shift', pressed: false})
+    }
     if(['KeyD', 'KeyA', 'KeyS', 'KeyW'].includes(event.code)){
         audio.walking.pause()
     }
 })
-
 window.addEventListener('mousemove', (event) => {
     socket.emit('mouseposition', {mX: event.offsetX, mY: event.offsetY})
+    console.log(event)
 })
-
 const throttle = (fn, delay) => {
-    let last = 0;
+    let last = 0
     return (...args) => {
         const now = new Date().getTime()
         if(now - last < delay){
@@ -262,24 +270,26 @@ const throttle = (fn, delay) => {
         return fn(...args)
     } 
 }
-
 window.addEventListener('click', throttle(() => {
     if(keys.one.pressed || !keys.one.pressed && !keys.two.pressed && !keys.three.pressed){
         socket.emit('clicked', {type: 'fire'})
         audio.fireball.play()
     }
 }, 500))
-
 window.addEventListener('click', throttle(() => {
     if(keys.two.pressed){
         socket.emit('clicked', {type: 'toxic'})
         audio.toxic.play()
     } 
 }, 1000))
-
 window.addEventListener('click', throttle(() => {
     if(keys.three.pressed){
         socket.emit('clicked', {type: 'ice'})
         audio.icelance.play()
     } 
 }, 1500))
+window.addEventListener('click', () =>{
+    if(!username.value > 0){
+        audio.intro.play()
+    }
+} )
