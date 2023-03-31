@@ -115,9 +115,6 @@ socket.on('newPositions', function(data){
         } 
     }  
     for(let i = 0; i < data.player.length; i++){
-        if(data.player[i].id){
-            selfId = PLAYER_LIST[data.player[i].id]
-        }
         c.fillStyle = 'red'
         c.fillRect(data.player[i].x - 15, data.player[i].y - 40, 50, 5)
         c.fillStyle = 'green'
@@ -285,8 +282,4 @@ window.addEventListener('click', throttle(() => {
         audio.icelance.play()
     } 
 }, 1500))
-window.addEventListener('click', () =>{
-    if(!username.value > 0){
-        audio.intro.play()
-    }
-} )
+

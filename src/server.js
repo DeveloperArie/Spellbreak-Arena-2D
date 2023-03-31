@@ -112,16 +112,16 @@ class Projectile {
     }
 }
 Player.onConnect = function(socket, username){
-    if(Object.keys(PLAYER_LIST).length < 2) {
-        let position = playerPositions[Object.keys(PLAYER_LIST).length % 2]
         let player = new Player({
-            position: position,
+            position: {
+                x: 50,
+                y: 760
+            },
             velocity: {
                 x: 0,
                 y: 0
             }}, socket.id, username)
         PLAYER_LIST[socket.id] = player
-        Object.keys(PLAYER_LIST).length % 2 === 0
         socket.on('keypress', function(data){
             if(data.inputID === 'right'){
                 player.pressingRight = data.pressed
@@ -134,12 +134,10 @@ Player.onConnect = function(socket, username){
             if(data.inputID === 'down'){
                 player.pressingDown = data.pressed
                 player.velocity.y = 5
-            
             }
             if(data.inputID === 'up'){
                 player.pressingUp = data.pressed
                 player.velocity.y = 5
-            
             }
             if(data.inputID === 'shift'){
                 if (data.pressed) {
@@ -181,9 +179,6 @@ Player.onConnect = function(socket, username){
                 SOCKET_LIST[i].emit('addToChat', player.username + ': ' + data)
             }
         })
-    } else {
-        socket.emit('roomFull')
-    }
 }
 Player.onDisconnect = function(socket){
     delete PLAYER_LIST[socket.id]
@@ -341,9 +336,10 @@ function playerBoundaryCollisionDetection(){
     boundaries.forEach(boundary => {
         for(let i in PLAYER_LIST){
             let player = PLAYER_LIST[i]
-            if (player.position.x < 0 || player.position.x > 840 || player.position.y < 0 || player.position.y > 840){
+            if (player.position.x <= 0 || player.position.x >= 840 || player.position.y <= 0 || player.position.y >= 840){
                 player.velocity.x = 0
                 player.velocity.y = 0 
+                
             }
             if(player.position.y + player.velocity.y
                 <= 
@@ -358,7 +354,7 @@ function playerBoundaryCollisionDetection(){
                 <= 
                 boundary.position.x + boundary.width){
                 player.velocity.x = 0
-                player.velocity.y = 0 
+                player.velocity.y = 0
             } 
         }
     })
