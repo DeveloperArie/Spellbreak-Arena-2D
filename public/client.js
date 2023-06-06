@@ -14,6 +14,8 @@ const timeLeft = document.getElementById('timeleft')
 const c = canvas.getContext('2d')
 canvas.width = 840
 canvas.height = 840
+let mouseX =0
+let mouseY =0
 const img = {}
 img.player = new Image()
 img.player.src = 'img/mage.png'
@@ -91,6 +93,15 @@ socket.on('newPositions', function(data){
     c.fillStyle = '#CAE9FF'
     c.fillRect(0, 0, canvas.width, canvas.height)
     c.drawImage(img.map,0,0,canvas.width,canvas.height)
+
+
+    c.beginPath();
+    c.moveTo(0, mouseY);
+    c.lineTo(canvas.width, mouseY);
+    c.moveTo(mouseX, 0);
+    c.lineTo(mouseX, canvas.height);
+    c.stroke();
+
     for(let i = 0; i < data.boundary.length; i++){
         c.save()
         c.translate(data.boundary[i].cx, data.boundary[i].cy)
@@ -250,19 +261,15 @@ window.addEventListener('keyup', (event) => {
 })
 window.addEventListener('mousemove', (event) => {
     let pos = getMousePos(canvas, event)
-    c.beginPath();
-    c.moveTo(0, pos.y);
-    c.lineTo(canvas.width, pos.y);
-    c.moveTo(pos.x, 0);
-    c.lineTo(pos.x, canvas.height);
-    c.stroke();
+    mouseX = pos.x
+    mouseY = pos.y
     socket.emit('mouseposition', {mX: pos.x, mY: pos.y})
 })
 function getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect()
     return {
-      x: evt.pageX - rect.left,
-      y: evt.pageY - rect.top
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top
     }
 }   
 const throttle = (fn, delay) => {
