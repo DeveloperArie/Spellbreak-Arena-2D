@@ -71,7 +71,6 @@ socket.on('signInRes', function(data){
         gameDiv.style.display = 'inline-block'
         score1.innerText += data.username + ": "
         score2.innerText += data.username + ": "
-        audio.intro.pause()
     }else
         alert('Sign in unsuccessful')
 })
@@ -250,9 +249,22 @@ window.addEventListener('keyup', (event) => {
     }
 })
 window.addEventListener('mousemove', (event) => {
-    socket.emit('mouseposition', {mX: event.offsetX, mY: event.offsetY})
-    console.log(event)
+    let pos = getMousePos(canvas, event)
+    c.beginPath();
+    c.moveTo(0, pos.y);
+    c.lineTo(canvas.width, pos.y);
+    c.moveTo(pos.x, 0);
+    c.lineTo(pos.x, canvas.height);
+    c.stroke();
+    socket.emit('mouseposition', {mX: pos.x, mY: pos.y})
 })
+function getMousePos(canvas, evt) {
+    var rect = canvas.getBoundingClientRect()
+    return {
+      x: evt.pageX - rect.left,
+      y: evt.pageY - rect.top
+    }
+}   
 const throttle = (fn, delay) => {
     let last = 0
     return (...args) => {
