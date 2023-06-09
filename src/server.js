@@ -17,7 +17,8 @@ let deletedItems = [];
 let deletedItem = [];
 let timer = 0;
 class Player {
-  constructor({ position, velocity }, id, username) {
+  constructor({ position, velocity }, id, username, socket) {
+      this.socket = socket
     this.position = position;
     this.velocity = velocity;
     this.id = id;
@@ -60,18 +61,87 @@ class Player {
     if (this.pressingDown) {
       this.position.y += this.velocity.y;
     }
-    if (this.isDashing) {
-      this.dash();
-    }
-    playerBoundaryCollisionDetection();
-    console.log({ vx: this.velocity.x, vy: this.velocity.y });
+    this.playerBoundaryCollisionDetection();
     playerConsumableCollisionDetection();
+ console.log(`${this.username}: Y POS: ${this.position.y}`)
   }
+playerBoundaryCollisionDetection() {
+  //for (let i in PLAYER_LIST) {
+
+    let isThereABoundaryTop = false;
+    let isThereABoundaryBottom = false;
+    let isThereABoundaryLeft = false;
+    let isThereABoundaryRight = false;
+    let player = this
+
+    if (player.position.x < 10 ) {
+        isThereABoundaryLeft |= true
+        player.velocity.x = 0
+    }
+    if (player.position.x > 810) {
+        isThereABoundaryRight |= true
+        player.velocity.x = 0
+    }
+    if (player.position.y > 810 ) {
+        isThereABoundaryBottom |= true
+        player.velocity.y = 0
+    }
+    if (player.position.y < 10 ) {
+        isThereABoundaryTop |= true
+        player.velocity.y = 0
+    }
+
+    boundaries.forEach((boundary) => {
+      if (
+        player.position.y + player.velocity.y <=
+          boundary.position.y + boundary.height &&
+        player.position.x + player.width + player.velocity.x >=
+          boundary.position.x &&
+        player.position.y + player.height + player.velocity.y >=
+          boundary.position.y &&
+        player.position.x + player.velocity.x <=
+          boundary.position.x + boundary.width
+      ) {
+        if (
+          player.position.y + player.velocity.y <= boundary.position.y &&
+          player.position.y + player.height + player.velocity.y >=
+            boundary.position.y
+        ) {
+          isThereABoundaryBottom |= true;
+        } else if (
+          player.position.y - player.velocity.y <=
+          boundary.position.y + boundary.height
+        ) {
+          isThereABoundaryTop |= true;
+        }
+
+        if (
+          player.position.x - player.velocity.x <=
+          boundary.position.x + boundary.width
+        ) {
+          if (player.position.x + player.velocity.x >= boundary.position.x) {
+            isThereABoundaryLeft |= true;
+          } else {
+            isThereABoundaryRight |= true;
+          }
+        }
+
+        player.velocity.x = 0;
+        player.velocity.y = 0;
+      }
+
+    });
+    player.isThereABoundaryTop = isThereABoundaryTop;
+    player.isThereABoundaryLeft = isThereABoundaryLeft;
+    player.isThereABoundaryRight = isThereABoundaryRight;
+    player.isThereABoundaryBottom = isThereABoundaryBottom;
+  //}
+}
   updateFacingPosition() {
-    this.angle = Math.atan2(
-      this.mouseX - this.position.x,
-      -(this.mouseY - this.position.y)
-    );
+    const centerY = this.position.y + this.height / 2;
+    const centerX = this.position.x + this.width / 2;
+    this.angle =
+      Math.atan2(this.mouseY - centerY, this.mouseX - centerX) + Math.PI / 2;
     this.rotation = this.angle - Math.PI / 2;
     this.targetVelocityX = Math.cos(this.rotation);
     this.targetVelocityY = Math.sin(this.rotation);
@@ -89,8 +159,8 @@ class Player {
         this.isDashing = false;
       }
     }, 500);
-    this.position.x += this.velocity.x;
-    this.position.y += this.velocity.y;
+  //  this.position.x += this.velocity.x;
+  //  this.position.y += this.velocity.y;
   }
 }
 PLAYER_LIST.forEach((player) => {
@@ -145,10 +215,15 @@ Player.onConnect = function (socket, username) {
       },
     },
     socket.id,
-    username
+    username,
+      socket
   );
   PLAYER_LIST[socket.id] = player;
   socket.on("keypress", function (data) {
+      console.log(`KEYPRESS BY: ${player.username}`)
+      console.log(`INPUT ID ${data.inputID}`)
+      console.log(`BOTTOM COLLIDE:  ${player.isThereABoundaryBottom}`)
+
     if (data.inputID === "right") {
       player.pressingRight = data.pressed;
       if (player.isThereABoundaryRight) {
@@ -159,7 +234,11 @@ Player.onConnect = function (socket, username) {
     }
     if (data.inputID === "left") {
       player.pressingLeft = data.pressed;
-      player.velocity.x = 5;
+        if (player.isThereABoundaryLeft) {
+            player.velocity.x = 0
+        }
+            else {player.velocity.x = 5;
+        }
     }
     if (data.inputID === "down") {
       player.pressingDown = data.pressed;
@@ -179,11 +258,16 @@ Player.onConnect = function (socket, username) {
     }
     if (data.inputID === "shift") {
       if (data.pressed) {
-        player.isDashing = true;
+        //player.isDashing = true;
+          // We dont want to dash if alr dashing
+          if (!player.isDashing) {
+              player.dash()
+          }
       } else {
-        player.isDashing = false;
+        //player.isDashing = false;
       }
     }
+      console.log({vel: player.velocity, pressUp: player.pressingUp})
   });
   socket.on("mouseposition", function (data) {
     player.mouseX = data.mX;
@@ -191,6 +275,7 @@ Player.onConnect = function (socket, username) {
   });
   socket.on("clicked", function (data) {
     if (data.type === "fire") {
+
       fire(player);
     } else if (data.type === "toxic") {
       toxic(player);
@@ -220,6 +305,7 @@ Player.onDisconnect = function (socket) {
 };
 function fire(player) {
   let fireball;
+
   if (player.powerUp) {
     fireball = new Projectile(
       {
@@ -241,6 +327,7 @@ function fire(player) {
       player.angle
     );
   } else {
+    console.log(player.angle);
     fireball = new Projectile(
       {
         position: {
@@ -385,9 +472,13 @@ function projectilePlayerCollisionDetection() {
             let shooter = PLAYER_LIST[projectile.parent];
             if (shooter) {
               shooter.score += 1;
-              io.emit("updateScore", {
-                playerID: shooter.id,
-                score: shooter.score,
+              player.socket.emit("updateScore", {
+                scoreYou: player.score,
+                scoreEnemy: shooter.score,
+              });
+              shooter.socket.emit("updateScore", {
+                scoreYou: shooter.score,
+                scoreEnemy: player.score,
               });
             }
             player.health = 200;
@@ -423,78 +514,6 @@ function projectileBoundaryCollisionDetection() {
       }
     }
   });
-}
-function playerBoundaryCollisionDetection() {
-    for (let i in PLAYER_LIST) {
-        let isThereABoundaryTop = false;
-        let isThereABoundaryBottom = false;
-        let isThereABoundaryLeft = false;
-        let isThereABoundaryRight = false;
-      let player = PLAYER_LIST[i];
-  boundaries.forEach((boundary) => {
-      if (
-        player.position.x <= 0 ||
-        player.position.x >= 840 ||
-        player.position.y <= 0 ||
-        player.position.y >= 840
-      ) {
-        player.velocity.x = 0;
-        player.velocity.y = 0;
-      }
-
-      if (
-        player.position.y + player.velocity.y <=
-          boundary.position.y + boundary.height &&
-        player.position.x + player.width + player.velocity.x >=
-          boundary.position.x &&
-        player.position.y + player.height + player.velocity.y >=
-          boundary.position.y &&
-        player.position.x + player.velocity.x <=
-          boundary.position.x + boundary.width
-      ) {
-        console.log("BOUNDARY HIT");
-          console.log(player.position.y + player.velocity.y <=
-          boundary.position.y + boundary.height)
-
-          console.log(player.position.y + player.height + player.velocity.y >=
-          boundary.position.y)
-
-        if (
-          player.position.y + player.velocity.y <= boundary.position.y &&
-          player.position.y + player.height + player.velocity.y >=
-            boundary.position.y
-        ) {
-          console.log("BOTTOM");
-          isThereABoundaryBottom |= true;
-        }  else if (
-          player.position.y - player.velocity.y <= boundary.position.y + boundary.height
-        ) {
-          console.log("TOP");
-          isThereABoundaryTop |= true;
-        }
-
-          if (player.position.x - player.velocity.x <= boundary.position.x + boundary.width) {
-          if (player.position.x + player.velocity.x >= boundary.position.x) {
-              console.log("LEFT")
-              isThereABoundaryLeft |= true
-          } else {
-              console.log("RIGHT")
-              isThereABoundaryRight |= true
-          }
-          }
-
-
-        player.velocity.x = 0;
-        player.velocity.y = 0;
-      }
-          });
-        console.log("HERE!!!");
-        player.isThereABoundaryTop = isThereABoundaryTop;
-        player.isThereABoundaryLeft = isThereABoundaryLeft;
-        player.isThereABoundaryRight = isThereABoundaryRight;
-        player.isThereABoundaryBottom = isThereABoundaryBottom;
-        console.log(player.isThereABoundaryBottom)
-    }
 }
 
 function circleRectangleCollisionDetection(p, c) {
@@ -553,7 +572,7 @@ function playerConsumableCollisionDetection() {
     }
   }
 }
-Player.update = function () {
+function update()  {
   let pack = [];
   for (let i in PLAYER_LIST) {
     let player = PLAYER_LIST[i];
@@ -667,7 +686,7 @@ io.on("connection", (socket) => {
 });
 setInterval(function () {
   let pack = {
-    player: Player.update(),
+    player: update(),
     projectile: Projectile.update(),
     boundary: Boundary.update(),
     consumable: Consumable.update(),

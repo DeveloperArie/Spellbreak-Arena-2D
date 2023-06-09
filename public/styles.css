@@ -1,117 +1,119 @@
 body {
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    animation: 10s linear gradient infinite;
-    animation-play-state: running;
-    background-size: 200% 200%;
-    background-position: left bottom;
-    background-image: url('/img/background.png');
-    background-size: cover;
-    background-repeat: no-repeat;
-    min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: 10s linear gradient infinite;
+  animation-play-state: running;
+  background-size: 200% 200%;
+  background-position: left bottom;
+  background-image: url("/img/background.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  min-height: 100vh;
 }
 #header {
-    margin: auto auto;
+  margin: auto auto;
 }
-#start{
-    color: white;
-    background-color: darkgreen;
-    border: 2px solid black;
-    border-radius: 4px;
-    width: 223px;
-    height: 50px;
-    padding-top: 4px;
-    padding-bottom: 4px;
-    padding-left: 8px;
-    padding-right: 8px;
-    margin-top: 10px;
+#start {
+  color: white;
+  background-color: darkgreen;
+  border: 2px solid black;
+  border-radius: 4px;
+  width: 223px;
+  height: 50px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
+  margin-top: 10px;
 }
 #chat-box {
-    display: flex;
-    flex-direction: column;
-    width: 200px;
-    height: 200px;
-    background-color: white;
-    border: 2px solid #000000;
-    padding: 10px;
-    overflow-y:scroll;
-    border: 2px solid black;
-    border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  width: 200px;
+  height: 200px;
+  background-color: white;
+  border: 2px solid #000000;
+  padding: 10px;
+  overflow-y: scroll;
+  border: 2px solid black;
+  border-radius: 4px;
 }
-#chat-input{
-    bottom: 0;
-    width: 200px;
-    padding: 10px;
-    margin-top: 10px;
-    border: 2px solid black;
-    border-radius: 4px;
+#chat-input {
+  bottom: 0;
+  width: 200px;
+  padding: 10px;
+  margin-top: 10px;
+  border: 2px solid black;
+  border-radius: 4px;
 }
-#game-div{
-    margin-bottom: 0px;
-    display: none;
+#game-div {
+  margin-bottom: 0px;
+  display: none;
 }
-#container{
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: end;
+#container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: end;
 }
-#opener{
-    color: goldenrod;
-    text-shadow: 1px 1px 2px black;
+#opener {
+  color: goldenrod;
+  text-shadow: 1px 1px 2px black;
 }
-#username{
-    width: 200px;
-    border: 2px solid black;
-    padding-top: 3px;
-    padding-bottom: 3px;
-    padding-left: 6px;
-    padding-right: 6px;
-    border-radius: 4px;
+#username {
+  width: 200px;
+  border: 2px solid black;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  padding-left: 6px;
+  padding-right: 6px;
+  border-radius: 4px;
 }
-#enter-name{
-    color: white;
+#enter-name {
+  color: white;
 }
-#signIn{  
-    padding-top: 8px;
-    padding-bottom: 8px;
-    padding-left: 40px;
-    padding-right: 40px;
-    background-color: blue;
-    color: white;
-    border-radius: 4px;
+#signIn {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 40px;
+  padding-right: 40px;
+  background-color: blue;
+  color: white;
+  border-radius: 4px;
 }
-#signDiv{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+#signDiv {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }
-#c{
-    border: 1px solid #000000;
-    margin-right: 10px;
-    margin-top: 20px;
-    margin-left: 20px;
-    cursor: none;
+#gameCanvas {
+  /*
+     border: 1px solid #000000;
+     margin-right: 10px;
+     margin-top: 20px;
+     margin-left: 20px;
+ */
+  cursor: none;
 }
-#controls{
-    align-items: center;
-    margin-bottom: 10px;
-    color: white;
+#controls {
+  align-items: center;
+  margin-bottom: 10px;
+  color: white;
 }
-#timer{
-    top: 0;
-    margin-bottom: 10px;
+#timer {
+  top: 0;
+  margin-bottom: 10px;
 }
-#timeleft{
-    border: 1px solid black;
-    padding: 20px;
-    justify-content: center;
+#timeleft {
+  border: 1px solid black;
+  padding: 20px;
+  justify-content: center;
 }
-#scores{
-    color: white;
+#scores {
+  color: white;
 }
