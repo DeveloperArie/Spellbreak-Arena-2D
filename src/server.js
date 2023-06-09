@@ -13,6 +13,11 @@ const playerPositions = [
   { x: 50, y: 760 },
   { x: 760, y: 50 },
 ];
+const playerPositionsCONST = [
+  { x: 50, y: 760 },
+  { x: 760, y: 50 },
+];
+let numPlayers = 0;
 let deletedItems = [];
 let deletedItem = [];
 let timer = 0;
@@ -48,6 +53,11 @@ class Player {
     this.isThereABoundaryTop = false;
     this.isThereABoundaryBottom = false;
   }
+  setPosition(pos) {
+      console.log("UPDATING POS")
+      console.log({pos})
+      this.position = pos
+  }
   updatePosition() {
     if (this.pressingRight) {
       this.position.x += this.velocity.x;
@@ -63,7 +73,6 @@ class Player {
     }
     this.playerBoundaryCollisionDetection();
     playerConsumableCollisionDetection();
- console.log(`${this.username}: Y POS: ${this.position.y}`)
   }
 playerBoundaryCollisionDetection() {
   //for (let i in PLAYER_LIST) {
@@ -203,12 +212,13 @@ class Projectile {
   }
 }
 Player.onConnect = function (socket, username) {
+    numPlayers +=1;
+    let idx = numPlayers -1
+    let position = playerPositions[idx]
+    console.log({playerPositions,idx, position})
   let player = new Player(
     {
-      position: {
-        x: 50,
-        y: 760,
-      },
+      position,
       velocity: {
         x: 0,
         y: 0,
@@ -220,9 +230,6 @@ Player.onConnect = function (socket, username) {
   );
   PLAYER_LIST[socket.id] = player;
   socket.on("keypress", function (data) {
-      console.log(`KEYPRESS BY: ${player.username}`)
-      console.log(`INPUT ID ${data.inputID}`)
-      console.log(`BOTTOM COLLIDE:  ${player.isThereABoundaryBottom}`)
 
     if (data.inputID === "right") {
       player.pressingRight = data.pressed;
@@ -267,7 +274,6 @@ Player.onConnect = function (socket, username) {
         //player.isDashing = false;
       }
     }
-      console.log({vel: player.velocity, pressUp: player.pressingUp})
   });
   socket.on("mouseposition", function (data) {
     player.mouseX = data.mX;
@@ -327,7 +333,6 @@ function fire(player) {
       player.angle
     );
   } else {
-    console.log(player.angle);
     fireball = new Projectile(
       {
         position: {
@@ -481,7 +486,16 @@ function projectilePlayerCollisionDetection() {
                 scoreEnemy: player.score,
               });
             }
-            player.health = 200;
+    
+      let asdf = JSON.parse(JSON.stringify(playerPositionsCONST))
+      let n = 0
+      for (let i in PLAYER_LIST) {
+          n+=1
+        let player = PLAYER_LIST[i];
+          player.health = 200
+          player.setPosition(asdf[n-1]);
+      }
+
           }
           PROJECTILE_LIST.splice(i, 1);
           projectile.isColliding = true;
@@ -566,7 +580,6 @@ function playerConsumableCollisionDetection() {
           });
           deletedItems.pop(deletedItem);
           player.isConsuming = true;
-          console.log(player.isConsuming);
         }
       }
     }
@@ -663,26 +676,40 @@ io.on("connection", (socket) => {
     Player.onDisconnect(socket);
     console.log("a player disconnected");
   });
-  socket.on("startGame", () => {
+  socket.on("restartGame", () => {
     resetGame();
-    startTimer();
   });
   function resetGame() {
-    PLAYER_LIST.forEach((player, index) => {
-      const position = playerPositions[index + 1];
-      player.position = position;
-    });
-    timer = 60;
-  }
-  function startTimer() {
-    let countDown = setInterval(function () {
-      if (timer <= 0) {
-        clearInterval(countDown);
+      let asdf = JSON.parse(JSON.stringify(playerPositionsCONST))
+      let n = 0
+      for (let i in PLAYER_LIST) {
+          n+=1
+        let player = PLAYER_LIST[i];
+          console.log({asdf, n})
+          player.setPosition(asdf[n-1]);
+          player.health = 200
+          player.score = 0
       }
-      timer -= 1;
-      socket.emit("timer", { time: timer });
-    }, 1000);
+      for (let i in PLAYER_LIST) {
+        let player = PLAYER_LIST[i];
+          console.log({name:player.username, pos:player.position})
+      }
+      console.log(`asdf`)
+   // PLAYER_LIST.forEach((player, index) => {
+   //   const position = playerPositions[index + 1];
+   //   player.position = position;
+   // });
+   // timer = 60;
   }
+  // function startTimer() {
+  //   let countDown = setInterval(function () {
+  //     if (timer <= 0) {
+  //       clearInterval(countDown);
+  //     }
+  //     timer -= 1;
+  //     socket.emit("timer", { time: timer });
+  //   }, 1000);
+  // }
 });
 setInterval(function () {
   let pack = {

@@ -28,6 +28,7 @@ body {
   padding-left: 8px;
   padding-right: 8px;
   margin-top: 10px;
+  margin-left: 10px;
 }
 #chat-box {
   display: flex;
@@ -40,12 +41,14 @@ body {
   overflow-y: scroll;
   border: 2px solid black;
   border-radius: 4px;
+  margin-left: 10px;
 }
 #chat-input {
   bottom: 0;
   width: 200px;
   padding: 10px;
   margin-top: 10px;
+  margin-left: 10px;
   border: 2px solid black;
   border-radius: 4px;
 }
@@ -102,18 +105,36 @@ body {
 }
 #controls {
   align-items: center;
-  margin-bottom: 10px;
   color: white;
+  text-shadow: 1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000;
+  font-weight: bold;
+  margin-right: 10px;
+  
+}
+.about{
+  margin-right: 10px;
+  color: white;
+  text-shadow: 1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000;
+  max-width: 500px;
+
+}
+.leftInfo{
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  
 }
 #timer {
   top: 0;
   margin-bottom: 10px;
 }
 #timeleft {
-  border: 1px solid black;
   padding: 20px;
   justify-content: center;
 }
 #scores {
   color: white;
+  text-shadow: 1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000;
+  font-weight: bold;
+  text-align: center;
 }

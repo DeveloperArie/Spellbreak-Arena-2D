@@ -59,7 +59,7 @@ let iceLanceFrameX = 0;
 let gameFrame = 0;
 let frameX = 0;
 startBtn.onclick = function () {
-  socket.emit("startGame");
+  socket.emit("restartGame");
 };
 signIn.onclick = function () {
   socket.emit("signIn", { username: username.value });
@@ -453,3 +453,4 @@ window.addEventListener(
     }
   }, 1500)
 );
+

@@ -14,15 +14,14 @@
         </div>
         <div id="gameDiv" style="display: none;">
             <div id="container">
-                <canvas id="gameCanvas"></canvas>
-                <div>                    
-                    <div id="timer">
-                        <h2 id="timeleft">0</h2>
-                    </div>
-                    <div id="scores">
-                        <div id="nameYou"></div> (YOU): <div id="scoreYou"><h2> 0</h2></div>
-                        <div id="nameEnemy"></div> (ENEMY): <div id="scoreEnemy"><h2> 0</h2></div>
-                    </div>
+                <div class="leftInfo">
+                    <h2 class="about">Objective: Welcome to Spellbreak Arena2D. The objective of the game
+                        is to eliminate the opposing player up to 7 times to win the game. On the arena you 
+                        will see red potions which will restore 25 health of damage taken and blue potions which
+                        will give you a powerup for the three gauntlets located on keys 1, 2, and 3. The chat will 
+                        allow you to communicate with the opposing player and the restart button will restart the game.
+                        Have fun!
+                    </h2>
                     <div id="controls">
                         <p>W: Move up</p>
                         <p>A: Move left</p>
@@ -33,11 +32,23 @@
                         <p>3: Icelance</p>
                         <p>Shift: Dash</p>
                     </div>
+                </div>
+                
+                <canvas id="gameCanvas"></canvas>
+                <div>                    
+                    <div id="timer">
+                        <h2 id="timeleft">0</h2>
+                    </div>
+                    <div id="scores">
+                        <div id="nameYou"></div> <h1>(YOU):</h1> <div id="scoreYou"><h1> 0</h1></div>
+                        <div id="nameEnemy"></div> <h1>(ENEMY):</h1> <div id="scoreEnemy"><h1> 0</h1></div>
+                    </div>
+                    
                     <div id="chat-box"></div>
                     <form id="chat-form">
                         <input id="chat-input" type="text"></input><br>
                     </form>
-                    <button id="start">Start</button>
+                    <button id="start">Restart</button>
                 </div>
             </div>
         </div>
