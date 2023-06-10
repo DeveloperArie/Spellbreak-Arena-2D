@@ -8,9 +8,6 @@ const username = document.getElementById("username");
 const signIn = document.getElementById("signIn");
 const gameDiv = document.getElementById("gameDiv");
 const startBtn = document.getElementById("start");
-const score1 = document.getElementById("score1");
-const score2 = document.getElementById("score2");
-const timeLeft = document.getElementById("timeleft");
 const c = canvas.getContext("2d");
 canvas.width = 840;
 canvas.height = 840;
@@ -84,8 +81,6 @@ socket.on("signInRes", function (data) {
   if (data.success) {
     signDiv.style.display = "none";
     gameDiv.style.display = "inline-block";
-    score1.innerText += data.username + ": ";
-    score2.innerText += data.username + ": ";
   } else alert("Sign in unsuccessful");
 });
 socket.on("addToChat", function (data) {
@@ -97,9 +92,7 @@ chatForm.onsubmit = function (e) {
   socket.emit("sendMsgToServer", chatInput.value);
   chatInput.value = "";
 };
-socket.on("timer", function (data) {
-  timeLeft.innerText = " " + data.time;
-});
+
 socket.on("newPositions", function (data) {
   c.clearRect(0, 0, 840, 840);
   c.fillStyle = "#CAE9FF";
